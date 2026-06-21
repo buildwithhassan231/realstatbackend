@@ -3,6 +3,13 @@ import { Property } from "../models/Property.js";
 
 // ─── Helper: upload buffer to Cloudinary ─────────────────────────────────────
 const uploadToCloudinary = (buffer, mimetype) => {
+  // Configure here — dotenv is guaranteed to be loaded by this point
+  cloudinary.config({
+    cloud_name: process.env.CLOUDINARY_CLOUD_NAME,
+    api_key: process.env.CLOUDINARY_API_KEY,
+    api_secret: process.env.CLOUDINARY_API_SECRET,
+  });
+
   return new Promise((resolve, reject) => {
     const stream = cloudinary.uploader.upload_stream(
       {
@@ -252,7 +259,7 @@ export const updateProperty = async (req, res) => {
     const updated = await Property.findByIdAndUpdate(
       req.params.id,
       { $set: req.body },
-      { new: true, runValidators: true }
+      { new: true, runValidators: true, returnDocument: "after" }
     );
 
     return res.status(200).json({
