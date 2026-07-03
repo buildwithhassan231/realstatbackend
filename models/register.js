@@ -21,15 +21,15 @@ const registerSchema = new mongoose.Schema(
     },
 
     phoneNumber: {
-      type: Number,
+      type: String,
       required: [true, "Phone number is required"],
       unique: true,
     },
 
     role: {
       type: String,
-      enum: ["Buyer", "agent"],
-      default: "Buyer",
+      enum: ["buyer", "agent"],
+      default: "buyer",
     },
 
     isBlocked: {
@@ -47,6 +47,10 @@ const registerSchema = new mongoose.Schema(
       default: "",
     },
     agencyName: {
+      type: String,
+      default: "",
+    },
+    city: {
       type: String,
       default: "",
     },

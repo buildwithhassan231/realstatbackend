@@ -17,55 +17,99 @@ export const logout = (req, res) => {
 
 export const register = async (req, res) => {
   try {
-    const { name, email, password, phoneNumber } = req.body;
+    const { name, email, password, phoneNumber, role, agencyName, city } = req.body;
 
-    // Validation
+    // Required fields check
     if (!name || !email || !password || !phoneNumber) {
       return res.status(400).json({
         success: false,
-        message: "All fields are required",
+        message: "Please fill all required fields",
       });
     }
 
-    // Check existing user
-    const existingUser = await UserRegisterSchema.findOne({
-      $or: [{ email }, { phoneNumber }],
-    });
+    // Role validation
+    const allowedRoles = ["buyer", "agent"];
+    const userRole = role || "buyer";
 
-    if (existingUser) {
+    if (!allowedRoles.includes(userRole)) {
       return res.status(400).json({
         success: false,
-        message: "Email or Phone Number already exists",
+        message: "Invalid role",
+      });
+    }
+
+    // Check email already exists
+    const emailExists = await UserRegisterSchema.findOne({ email });
+    if (emailExists) {
+      return res.status(400).json({
+        success: false,
+        message: "Email already registered",
+      });
+    }
+
+    // Check phone already exists
+    const phoneExists = await UserRegisterSchema.findOne({ phoneNumber });
+    if (phoneExists) {
+      return res.status(400).json({
+        success: false,
+        message: "Phone already registered",
       });
     }
 
     // Hash password
-    const saltRounds = 10;
-    const hashedPassword = await bcrypt.hash(password, saltRounds);
+    const hashedPassword = await bcrypt.hash(password, 10);
 
-    // Create user — role field intentionally ignored to prevent privilege escalation
+    // agencyName aur city sirf agent ke liye
+    const isAgent = userRole === "agent";
+
     const user = await UserRegisterSchema.create({
       name,
       email,
       password: hashedPassword,
-      phoneNumber,
+      phoneNumber: String(phoneNumber),
+      role: userRole,
+      agencyName: isAgent ? (agencyName || "") : "",
+      city: isAgent ? (city || "") : "",
+    });
+
+    // Generate JWT
+    const token = jwt.sign(
+      { id: user._id, email: user.email, role: user.role },
+      process.env.JWT_SECRET,
+      { expiresIn: "7d" }
+    );
+
+    // Set HTTP-only cookie
+    res.cookie("token", token, {
+      httpOnly: true,
+      secure: process.env.NODE_ENV === "production",
+      sameSite: "strict",
+      maxAge: 7 * 24 * 60 * 60 * 1000,
     });
 
     return res.status(201).json({
       success: true,
-      message: "User registered successfully",
-      data: {
+      message: "Registration successful",
+      token,
+      user: {
         id: user._id,
         name: user.name,
         email: user.email,
         phoneNumber: user.phoneNumber,
+        role: user.role,
+        profileImage: user.profileImage?.url || "",
+        bio: user.bio,
+        agencyName: user.agencyName,
+        city: user.city,
+        isBlocked: user.isBlocked,
+        createdAt: user.createdAt,
       },
     });
   } catch (error) {
     console.log(error);
     return res.status(500).json({
       success: false,
-      message: "Internal Server Error",
+      message: "Server error. Try again.",
     });
   }
 };

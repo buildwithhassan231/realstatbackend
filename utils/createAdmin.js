@@ -8,6 +8,7 @@ import mongoose from "mongoose";
 import bcrypt from "bcrypt";
 import { UserRegisterSchema } from "../models/register.js";
 
+// create admin
 const createAdmin = async () => {
   try {
     await mongoose.connect(process.env.MONGO_URI);
