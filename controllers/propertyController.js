@@ -371,9 +371,9 @@ export const deleteProperty = async (req, res) => {
 // ─── Get My Properties ────────────────────────────────────────────────────────
 export const getMyProperties = async (req, res) => {
   try {
-    const properties = await Property.find({ createdBy: req.user._id }).sort({
-      createdAt: -1,
-    });
+    const properties = await Property.find({ createdBy: req.user._id })
+      .populate("createdBy", "name email phoneNumber profileImage agencyName")
+      .sort({ createdAt: -1 });
 
     return res.status(200).json({
       success: true,
@@ -384,6 +384,7 @@ export const getMyProperties = async (req, res) => {
     console.log(error);
     return res.status(500).json({
       success: false,
+      data: {},
       message: "Internal Server Error",
     });
   }
