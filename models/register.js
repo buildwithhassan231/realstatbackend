@@ -54,6 +54,30 @@ const registerSchema = new mongoose.Schema(
       type: String,
       default: "",
     },
+    whatsapp: {
+      type: String,
+      default: "",
+    },
+    experience: {
+      type: Number,   // years of experience
+      default: 0,
+    },
+    specializations: {
+      type: [String], // e.g. ["Villa", "Apartment", "Commercial"]
+      default: [],
+    },
+    verified: {
+      type: Boolean,
+      default: false,
+    },
+    deals: {
+      type: Number,   // total completed deals
+      default: 0,
+    },
+    rating: {
+      average: { type: Number, default: 0 },
+      count:   { type: Number, default: 0 },
+    },
 
     favorites: [
       {

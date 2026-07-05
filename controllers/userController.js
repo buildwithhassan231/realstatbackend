@@ -1,8 +1,6 @@
 import { UserRegisterSchema } from "../models/register.js";
 import { Property } from "../models/Property.js";
 import cloudinary from "../config/cloudnary.js";
-
-// ─── Get Public Agent Profile ─────────────────────────────────────────────────
 export const getAgentProfile = async (req, res) => {
   try {
     const agent = await UserRegisterSchema.findById(req.params.agentId).select(
@@ -42,18 +40,25 @@ export const getAgentProfile = async (req, res) => {
 // ─── Update My Profile ────────────────────────────────────────────────────────
 export const updateMyProfile = async (req, res) => {
   try {
-    const { name, phoneNumber, bio, agencyName } = req.body;
+    const { name, phoneNumber, bio, agencyName, whatsapp, experience, specializations, deals } = req.body;
     const user = await UserRegisterSchema.findById(req.user._id);
 
     if (!user) {
       return res.status(404).json({ success: false, message: "User not found" });
     }
 
-    // Update text fields
     if (name) user.name = name;
     if (phoneNumber) user.phoneNumber = phoneNumber;
     if (bio !== undefined) user.bio = bio;
     if (agencyName !== undefined) user.agencyName = agencyName;
+    if (whatsapp !== undefined) user.whatsapp = whatsapp;
+    if (experience !== undefined) user.experience = Number(experience);
+    if (deals !== undefined) user.deals = Number(deals);
+    if (specializations !== undefined) {
+      user.specializations = Array.isArray(specializations)
+        ? specializations
+        : specializations.split(",").map((s) => s.trim());
+    }
 
     // Profile image upload
     if (req.file) {
@@ -109,7 +114,54 @@ export const updateMyProfile = async (req, res) => {
   }
 };
 
-// ─── Get Agent's Properties (Public) ─────────────────────────────────────────
+// ─── Get All Public Agents ────────────────────────────────────────────────────
+export const getAllAgents = async (req, res) => {
+  try {
+    const { page = 1, limit = 10, city } = req.query;
+
+    const filter = { role: "agent", isBlocked: false };
+    if (city) filter.city = { $regex: city, $options: "i" };
+
+    const skip = (Number(page) - 1) * Number(limit);
+    const total = await UserRegisterSchema.countDocuments(filter);
+
+    const agents = await UserRegisterSchema.find(filter)
+      .select("name email phoneNumber whatsapp profileImage bio agencyName city experience specializations verified deals rating createdAt")
+      .sort({ createdAt: -1 })
+      .skip(skip)
+      .limit(Number(limit));
+
+    // Har agent ki approved listings + count
+    const agentsWithListings = await Promise.all(
+      agents.map(async (agent) => {
+        const listings = await Property.find({
+          createdBy: agent._id,
+          approvalStatus: "approved",
+        })
+          .select("title price city propertyType listingType bedrooms bathrooms area images status isFeatured views")
+          .sort({ createdAt: -1 })
+          .limit(6); // max 6 listings per agent card
+
+        return {
+          ...agent.toObject(),
+          totalListings: listings.length,
+          listings,
+        };
+      })
+    );
+
+    return res.status(200).json({
+      success: true,
+      total,
+      page: Number(page),
+      pages: Math.ceil(total / Number(limit)),
+      data: agentsWithListings,
+    });
+  } catch (error) {
+    console.log(error);
+    return res.status(500).json({ success: false, message: "Internal Server Error" });
+  }
+};
 export const getPropertiesByAgent = async (req, res) => {
   try {
     const { agentId } = req.params;
