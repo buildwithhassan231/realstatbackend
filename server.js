@@ -11,6 +11,7 @@ import adminRoutes from "./routes/adminRoutes.js";
 import inquiryRoutes from "./routes/inquiryRoutes.js";
 import favoriteRoutes from "./routes/favoriteRoutes.js";
 import userRoutes from "./routes/userRoutes.js";
+import adminSettingsRoutes from "./routes/adminSettingsRoutes.js";
 import { getAllCategories } from "./controllers/adminController.js";
 import { errorHandler, notFound } from "./middleware/errorMiddleware.js";
 
@@ -30,6 +31,7 @@ connectdb();
 app.use("/api/auth", authRoutes);
 app.use("/api/properties", propertyRoutes);
 app.use("/api/admin", adminRoutes);
+app.use("/api/admin", adminSettingsRoutes);
 app.use("/api/inquiries", inquiryRoutes);
 app.use("/api/favorites", favoriteRoutes);
 app.use("/api/users", userRoutes);
