@@ -43,6 +43,8 @@ app.get("/api/categories", getAllCategories);
 app.use(notFound);
 app.use(errorHandler);
 
-app.listen(process.env.PORT, () => {
-  console.log("server is running on port ", process.env.PORT);
-});
+// app.listen(process.env.PORT, () => {
+//   console.log("server is running on port ", process.env.PORT);
+// });
+
+export default app;
