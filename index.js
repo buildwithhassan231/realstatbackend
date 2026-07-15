@@ -19,7 +19,7 @@ const app = express();
 
 // CORS — frontend ko allow karo
 app.use(cors({
-  origin: process.env.CLIENT_URL || "http://localhost:3000",
+  origin: process.env.CLIENT_URL || "https://realstatfrontend.vercel.app/",
   credentials: true, // cookies ke liye zaroori hai
 }));
 
